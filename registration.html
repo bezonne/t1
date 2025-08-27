@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Форма регистрации</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <style>
+    /* Поля одинакового стиля */
+    input[type="text"], input[type="password"] {
+      font-size: 20px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 2px solid #555;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: text;
+    }
+    select {
+      font-size: 20px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 2px solid #555;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <form id="registrationForm" onsubmit="onRegister(event)">
+      <label for="nameField">Имя:</label>
+      <input type="text" id="nameField" name="name" required />
+
+      <label for="passwordField">Пароль:</label>
+      <input type="password" id="passwordField" name="password" required />
+
+      <label for="dobField">Дата рождения:</label>
+      <input type="text" id="dobField" name="dobField" placeholder="ДД.ММ.ГГГГ" required />
+
+      <label for="genderField">Пол:</label>
+      <select id="genderField" name="gender" required>
+        <option value="" disabled selected>Выберите пол</option>
+        <option value="male">Мужской</option>
+        <option value="female">Женский</option>
+        <option value="other">Другой</option>
+      </select>
+
+      <label for="recoveryCodeField">Код для восстановления пароля:</label>
+      <input type="text" id="recoveryCodeField" name="recoveryCode" required />
+
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+
+    <div id="yesEq" class="equation" style="margin-top: 30px;"></div>
+
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" onclick="onSubmit(event)" disabled>Ввод</button>
+
+    <div id="timer" class="timer"></div>
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+
+  <script src="codes.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    flatpickr("#dobField", {
+      dateFormat: "d.m.Y",
+      allowInput: true,
+      // календарь откроется при клике в поле
+    });
+
+    let currentSum = 0;
+    let timeLeft = 30;
+    let timerInterval = null;
+    let challengeActive = false;
+
+    const correctCode = codes.registrationTask || '9412';
+
+    function onRegister(event) {
+      event.preventDefault();
+      startChallenge();
+    }
+
+    function generateEquation() {
+      const parts = [];
+      let remaining = Math.floor(Math.random() * 51) + 50;
+      const count = 10;
+      const sum = remaining;
+
+      for(let i=0; i < count -1; i++) {
+        let maxForPart = remaining - (count -1 - i);
+        let value = Math.floor(Math.random() * maxForPart) +1;
+        parts.push(value);
+        remaining -= value;
+      }
+      parts.push(remaining);
+
+      for(let i=parts.length -1; i>0; i--) {
+        const j = Math.floor(Math.random() * (i +1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+
+      currentSum = sum;
+      return parts;
+    }
+
+    function startChallenge() {
+      const parts = generateEquation();
+      document.getElementById('yesEq').textContent = parts.join(' + ');
+
+      document.getElementById('inputField').value = '';
+      document.getElementById('inputField').disabled = false;
+      document.getElementById('submitBtn').disabled = false;
+
+      clearMessages();
+      startTimer(timeLeft);
+      challengeActive = true;
+    }
+
+    function startTimer(seconds) {
+      timeLeft = seconds;
+      updateTimerDisplay();
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if(timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          if(challengeActive) {
+            challengeActive = false;
+            document.getElementById('inputField').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            showMessage('Ваше время вышло');
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = `Время: ${timeLeft} сек`;
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+      document.getElementById('timer').textContent = '';
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+
+      if(!challengeActive) return;
+
+      const input = document.getElementById('inputField').value.trim();
+      clearMessages();
+
+      if(parseInt(input) !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+
+      challengeActive = false;
+      if(timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      showCode(correctCode);
+    }
+  </script>
+</body>
+</html>

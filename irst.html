@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Задание с уравнением и таймером</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- Таймер выше кнопок -->
+    <div id="timer" class="timer"></div>
+
+    <button id="yesBtn" onclick="startChallenge()">Да</button>
+    <button id="noBtn" onclick="clearAll()">Нет</button>
+
+    <div id="yesEq" class="equation"></div>
+
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" onclick="onSubmit(event)" disabled>Ввод</button>
+
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+
+  <script src="constants.js"></script>
+  <script src="codes.js"></script>
+
+  <script>
+    let currentSum = 0;
+    let currentEquation = '';
+    let timeLeft = TASK_TIMER_SECONDS;
+    let timerInterval = null;
+    let challengeActive = false;
+    let taskStarted = false;
+
+    let currentTestCode = 'test1';
+
+    window.addEventListener('load', () => {
+      startTimer(TASK_TIMER_SECONDS);
+    });
+
+    function generateEquation() {
+      let parts = [];
+      let remaining = Math.floor(Math.random() * 51) + 50;
+      let count = 10;
+      let sum = remaining;
+
+      for (let i = 0; i < count - 1; i++) {
+        let maxForPart = remaining - (count - 1 - i);
+        const value = Math.floor(Math.random() * maxForPart) + 1;
+        parts.push(value);
+        remaining -= value;
+      }
+      parts.push(remaining);
+
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+
+      currentSum = sum;
+      return parts;
+    }
+
+    function startChallenge() {
+      if (taskStarted) return;
+      taskStarted = true;
+      challengeActive = true;
+
+      const parts = generateEquation();
+      currentEquation = parts.map(n => n.toString()).join('');
+      const equationWithPlus = parts.join(' + ');
+      document.getElementById('yesEq').textContent = equationWithPlus;
+
+      document.getElementById('inputField').value = '';
+      document.getElementById('inputField').disabled = false;
+      document.getElementById('submitBtn').disabled = false;
+
+      clearMessages();
+    }
+
+    function startTimer(seconds) {
+      timeLeft = seconds;
+      updateTimerDisplay();
+
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+
+          challengeActive = false;
+          taskStarted = false;
+
+          document.getElementById('inputField').disabled = true;
+          document.getElementById('submitBtn').disabled = true;
+
+          showMessage('Ваше время вышло');
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const timerSpan = document.getElementById('timer');
+      timerSpan.textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+
+    function clearAll() {
+      clearMessages();
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      currentEquation = '';
+      currentSum = 0;
+      challengeActive = false;
+      taskStarted = false;
+
+      document.getElementById('inputField').value = '';
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('timer').textContent = '';
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+
+      if (!challengeActive) return;
+
+      const input = document.getElementById('inputField').value.trim();
+      clearMessages();
+
+      if (parseInt(input) !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+
+      challengeActive = false;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      showCode(codes[currentTestCode]);
+    }
+  </script>
+</body>
+</html>

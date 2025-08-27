@@ -1,0 +1,135 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0f0f0;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  width: 600px; /* увеличена ширина формы */
+  max-width: 95%;
+}
+
+button#yesBtn, button#noBtn {
+  font-size: 72px; /* в 3 раза больше, если базовый 24px */
+  padding: 20px 40px;
+  margin: 20px 10px;
+  border-radius: 10px;
+  border: 2px solid #555;
+  cursor: pointer;
+  background-color: #fff;
+  transition: 0.3s;
+  min-width: 160px;
+}
+
+button#yesBtn:hover, button#noBtn:hover {
+  background-color: #e0e0e0;
+}
+
+form#registrationForm {
+  text-align: left;
+}
+
+form#registrationForm label {
+  display: block;
+  font-weight: bold;
+  margin-top: 15px;
+  font-size: 16px;
+  color: #333;
+}
+
+form#registrationForm input[type="text"],
+form#registrationForm input[type="password"],
+form#registrationForm input[type="date"],
+form#registrationForm select {
+  font-size: 20px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 2px solid #555;
+  width: 100%;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+form#registrationForm button[type="submit"] {
+  font-size: 24px;
+  padding: 15px 30px;
+  margin: 20px 0 10px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background-color: #fff;
+  transition: 0.3s;
+  min-width: 120px;
+  width: 100%;
+}
+
+form#registrationForm button[type="submit"]:hover {
+  background-color: #e0e0e0;
+}
+
+input[type="text"]#inputField {
+  font-size: 24px;
+  padding: 10px;
+  width: 220px;
+  border-radius: 8px;
+  border: 2px solid #555;
+  margin: 20px auto;
+  text-align: center;
+  display: block;
+}
+
+button#submitBtn {
+  font-size: 24px;
+  padding: 12px 30px;
+  margin: 10px auto 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background-color: #fff;
+  transition: 0.3s;
+  display: block;
+  width: 220px;
+}
+
+button#submitBtn:hover {
+  background-color: #e0e0e0;
+}
+
+.equation {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 30px 0 30px 0;
+  letter-spacing: 3px;
+  color: #333;
+  user-select: text;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.code, .error, .timer {
+  display: block;
+  font-weight: bold;
+  font-size: 20px;
+  margin: 15px 0;
+}
+
+.code {
+  color: green;
+}
+
+.error {
+  color: red;
+}
+
+.timer {
+  color: #333;
+}
