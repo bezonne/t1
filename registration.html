@@ -2,33 +2,15 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Форма регистрации</title>
+  <title>Форма регистрации с таймером</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <style>
-    /* Поля одинакового стиля */
-    input[type="text"], input[type="password"] {
-      font-size: 20px;
-      padding: 8px;
-      border-radius: 6px;
-      border: 2px solid #555;
-      width: 100%;
-      box-sizing: border-box;
-      cursor: text;
-    }
-    select {
-      font-size: 20px;
-      padding: 8px;
-      border-radius: 6px;
-      border: 2px solid #555;
-      width: 100%;
-      box-sizing: border-box;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
-    <form id="registrationForm" onsubmit="onRegister(event)">
+    <div id="timer" class="timer"></div>
+
+    <form id="registrationForm" novalidate>
       <label for="nameField">Имя:</label>
       <input type="text" id="nameField" name="name" required />
 
@@ -52,12 +34,11 @@
       <button type="submit">Зарегистрироваться</button>
     </form>
 
-    <div id="yesEq" class="equation" style="margin-top: 30px;"></div>
+    <div id="yesEq" class="equation hidden"></div>
 
-    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
-    <button id="submitBtn" onclick="onSubmit(event)" disabled>Ввод</button>
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled class="hidden" />
+    <button id="submitBtn" disabled class="hidden">Ввод</button>
 
-    <div id="timer" class="timer"></div>
     <div id="message" class="error"></div>
     <div id="code" class="code"></div>
   </div>
@@ -67,56 +48,40 @@
   <script>
     flatpickr("#dobField", {
       dateFormat: "d.m.Y",
-      allowInput: true,
-      // календарь откроется при клике в поле
+      allowInput: true
     });
 
-    let currentSum = 0;
-    let timeLeft = 30;
+    const task_duration_seconds = 30;
+    let currentSum = 0n;
+    let timeLeft = task_duration_seconds;
     let timerInterval = null;
     let challengeActive = false;
 
-    const correctCode = codes.registrationTask || '9412';
-
-    function onRegister(event) {
-      event.preventDefault();
-      startChallenge();
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function generateEquation() {
       const parts = [];
-      let remaining = Math.floor(Math.random() * 51) + 50;
-      const count = 10;
-      const sum = remaining;
-
-      for(let i=0; i < count -1; i++) {
-        let maxForPart = remaining - (count -1 - i);
-        let value = Math.floor(Math.random() * maxForPart) +1;
+      let remaining = BigInt(getRandomInt(300, 500));
+      const count = getRandomInt(10, 12);
+      for(let i = 0; i < count -1; i++) {
+        let maxForPart = remaining - BigInt(count -1 - i);
+        let value = BigInt(getRandomInt(1, Number(maxForPart)));
         parts.push(value);
         remaining -= value;
       }
       parts.push(remaining);
-
-      for(let i=parts.length -1; i>0; i--) {
-        const j = Math.floor(Math.random() * (i +1));
+      for(let i = parts.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
         [parts[i], parts[j]] = [parts[j], parts[i]];
       }
-
-      currentSum = sum;
+      currentSum = parts.reduce((acc,val)=> acc+val, 0n);
       return parts;
     }
 
-    function startChallenge() {
-      const parts = generateEquation();
-      document.getElementById('yesEq').textContent = parts.join(' + ');
-
-      document.getElementById('inputField').value = '';
-      document.getElementById('inputField').disabled = false;
-      document.getElementById('submitBtn').disabled = false;
-
-      clearMessages();
-      startTimer(timeLeft);
-      challengeActive = true;
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = `Оставшееся время: ${timeLeft} сек`;
     }
 
     function startTimer(seconds) {
@@ -131,59 +96,125 @@
           timerInterval = null;
           if(challengeActive) {
             challengeActive = false;
-            document.getElementById('inputField').disabled = true;
-            document.getElementById('submitBtn').disabled = true;
+            blockAllInputs();
+            document.getElementById('yesEq').classList.add('hidden');
             showMessage('Ваше время вышло');
           }
         }
       }, 1000);
     }
 
-    function updateTimerDisplay() {
-      document.getElementById('timer').textContent = `Время: ${timeLeft} сек`;
+    function blockAllInputs() {
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('inputField').classList.add('disabled');
+      document.getElementById('submitBtn').classList.add('disabled');
+      document.getElementById('registrationForm').querySelectorAll('input, select, button').forEach(el=>{
+        el.disabled = true;
+      });
     }
 
     function clearMessages() {
       document.getElementById('message').textContent = '';
       document.getElementById('code').textContent = '';
-      document.getElementById('timer').textContent = '';
     }
 
     function showMessage(msg) {
-      const messageSpan = document.getElementById('message');
-      messageSpan.textContent = msg;
-      messageSpan.className = 'error';
+      const msgEl = document.getElementById('message');
+      msgEl.textContent = msg;
+      msgEl.className = 'error';
     }
 
     function showCode(code) {
-      const codeSpan = document.getElementById('code');
-      codeSpan.textContent = 'Код: ' + code;
-      codeSpan.className = 'code';
+      const codeEl = document.getElementById('code');
+      codeEl.textContent = 'Код: ' + code;
+      codeEl.className = 'code';
+    }
+
+    function startChallenge() {
+      const parts = generateEquation();
+      document.getElementById('yesEq').textContent = parts.map(String).join(' + ');
+      document.getElementById('yesEq').classList.remove('hidden');
+
+      const inputField = document.getElementById('inputField');
+      const submitBtn = document.getElementById('submitBtn');
+      inputField.value = '';
+      inputField.disabled = false;
+      submitBtn.disabled = false;
+      inputField.classList.remove('hidden');
+      submitBtn.classList.remove('hidden');
+
+      clearMessages();
+      challengeActive = true;
+    }
+
+    function countButtons() {
+      const allButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+      return allButtons.length;
+    }
+
+    function onRegister(event) {
+      event.preventDefault();
+      const form = event.target;
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      startChallenge();
     }
 
     function onSubmit(event) {
       event.preventDefault();
-
-      if(!challengeActive) return;
+      if (!challengeActive) return;
 
       const input = document.getElementById('inputField').value.trim();
       clearMessages();
-
-      if(parseInt(input) !== currentSum) {
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
         showMessage('Ошибка');
         return;
       }
-
       challengeActive = false;
-      if(timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      document.getElementById('inputField').disabled = true;
-      document.getElementById('submitBtn').disabled = true;
+      clearInterval(timerInterval);
 
-      showCode(correctCode);
+      blockAllInputs();
+
+      const timeSpentSeconds = task_duration_seconds - timeLeft;
+      const buttonsCount = countButtons();
+      const fileName = window.location.pathname.split('/').pop().split('.')[0];
+      const fileNameLength = fileName.length;
+      const superCode = `${timeSpentSeconds}${buttonsCount}${fileNameLength}`;
+      const codeLength = getRandomInt(15, 20);
+
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for(let i = 0; i < Math.floor(codeLength/2); i++) {
+        codeRandomPart1 += Math.floor(Math.random()*10);
+      }
+      for(let i = 0; i < codeLength - Math.floor(codeLength/2); i++) {
+        codeRandomPart2 += Math.floor(Math.random()*10);
+      }
+      const insertIndex = Math.floor(Math.random()*codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+
+      showCode(finalCode);
     }
+
+    // Запускаем таймер сразу при загрузке страницы
+    window.addEventListener('load', () => {
+      startTimer(task_duration_seconds);
+    });
+
+    document.getElementById('registrationForm').addEventListener('submit', onRegister);
+    document.getElementById('submitBtn').addEventListener('click', onSubmit);
   </script>
 </body>
 </html>
