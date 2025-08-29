@@ -4,15 +4,6 @@
   <meta charset="UTF-8" />
   <title>Задание с уравнением и таймером</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    .disabled {
-      pointer-events: none;
-      opacity: 0.5;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -32,10 +23,10 @@
   </div>
 
   <script>
-    const TASK_TIMER_SECONDS = 60;
+    const task_duration_seconds = 60;
     let currentSum = 0n;
     let currentEquation = '';
-    let timeLeft = TASK_TIMER_SECONDS;
+    let timeLeft = task_duration_seconds;
     let timerInterval = null;
     let challengeActive = false;
     let taskStarted = false;
