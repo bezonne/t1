@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Задание с животными</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div id="timer" class="timer">Оставшееся время: ${timeLeft} сек</div>
+    <div class="button-grid" id="buttonsContainer"></div>
+
+    <div class="captcha-text" id="captcha"></div>
+
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" disabled>Ввод</button>
+
+    <div id="yesEq" class="equation"></div>
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+
+  <script>
+    const task_duration_seconds = 60;
+    let timeLeft = task_duration_seconds;
+    let timerInterval = null;
+
+    const animalList = [
+      "Лев", "Тигр", "Медведь", "Волк", "Слон", "Жираф", "Обезьяна", "Заяц",
+      "Олень", "Крокодил", "Лиса", "Пантера", "Коала", "Пингвин", "Пума",
+      "Хомяк", "Ястреб", "Барсук", "Енот", "Лошадь", "Белка", "Козел",
+      "Лебедь", "Филин", "Куница", "Утка", "Кабан", "Шакал", "Сова", "Еж"
+    ];
+
+    let buttons = [];
+    let challengeActive = false;
+    let currentSum = 0n;
+    let captchaAnimal = "";
+    const buttonsCount = 7;
+
+    const fileName = window.location.pathname.split('/').pop().split('.')[0];
+    const fileNameLength = fileName.length;
+
+    const buttonsContainer = document.getElementById('buttonsContainer');
+    const captchaDiv = document.getElementById('captcha');
+
+    function shuffleArray(array) {
+      for(let i = array.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createButtonsAndCaptcha() {
+      const shuffledAnimals = shuffleArray([...animalList]);
+      const selectedAnimals = shuffledAnimals.slice(0, 6);
+
+      captchaAnimal = selectedAnimals[Math.floor(Math.random() * selectedAnimals.length)];
+      let captchaText = "";
+      for(let c of captchaAnimal) {
+        captchaText += Math.random() > 0.5 ? c.toUpperCase() : c.toLowerCase();
+      }
+      captchaDiv.textContent = captchaText;
+
+      buttonsContainer.innerHTML = "";
+      buttons = [];
+      selectedAnimals.forEach(animal => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = animal;
+        btn.style.userSelect = 'none';
+        btn.addEventListener('click', () => onButtonClicked(btn, animal));
+        buttonsContainer.appendChild(btn);
+        buttons.push(btn);
+      });
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      const inputField = document.getElementById('inputField');
+      inputField.disabled = true;
+      inputField.value = "";
+      document.getElementById('yesEq').textContent = "";
+      document.getElementById('code').textContent = "";
+      document.getElementById('message').textContent = "";
+    }
+
+    function onButtonClicked(button, animal) {
+      if (challengeActive) return;
+      challengeActive = true;
+
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+      });
+
+      const submitBtn = document.getElementById('submitBtn');
+      const inputField = document.getElementById('inputField');
+
+      if (animal.toLowerCase() === captchaAnimal.toLowerCase()) {
+        button.classList.add('correct');
+        inputField.disabled = false;
+        submitBtn.disabled = false;
+        startEquationChallenge();
+      } else {
+        button.classList.add('wrong');
+        showMessage("Неверная кнопка");
+      }
+    }
+
+    function startEquationChallenge() {
+      const parts = generateEquation();
+      const equationStr = parts.map(x => x.toString()).join(' + ');
+      currentSum = parts.reduce((acc, val) => acc + val, 0n);
+
+      const eqDiv = document.getElementById('yesEq');
+      eqDiv.textContent = equationStr;
+      eqDiv.style.display = 'block';
+
+      clearMessages();
+    }
+
+    function generateEquation() {
+      const partsCount = getRandomInt(10, 12);
+      const parts = [];
+      let remaining = BigInt(getRandomInt(300, 500));
+      for (let i = 0; i < partsCount - 1; i++) {
+        let maxPart = remaining - BigInt(partsCount - 1 - i);
+        let val = BigInt(getRandomInt(1, Number(maxPart)));
+        parts.push(val);
+        remaining -= val;
+      }
+      parts.push(remaining);
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+      return parts;
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+      const inputField = document.getElementById('inputField');
+      if (!challengeActive || inputField.disabled) return;
+
+      const input = inputField.value.trim();
+      clearMessages();
+
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+
+      clearInterval(timerInterval);
+      inputField.disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      const timeSpentSeconds = task_duration_seconds - timeLeft;
+      const totalButtonsCount = buttons.length + 1;
+
+      const superCode = `${fileNameLength}${timeSpentSeconds}${totalButtonsCount}`;
+      const codeLength = getRandomInt(15, 20);
+
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for (let i = 0; i < Math.floor(codeLength / 2); i++) {
+        codeRandomPart1 += Math.floor(Math.random() * 10);
+      }
+      for (let i = 0; i < codeLength - Math.floor(codeLength / 2); i++) {
+        codeRandomPart2 += Math.floor(Math.random() * 10);
+      }
+
+      const insertIndex = Math.floor(Math.random() * codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+      showCode(finalCode);
+    }
+
+    function startTimer() {
+      timeLeft = task_duration_seconds;
+      updateTimerDisplay();
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          blockButtonsOnTimeout();
+        }
+      }, 1000);
+    }
+
+    function blockButtonsOnTimeout() {
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+      });
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('inputField').disabled = true;
+      showMessage('Время вышло');
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('yesEq').style.display = 'none';
+    }
+
+    window.addEventListener('load', () => {
+      createButtonsAndCaptcha();
+      startTimer();
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', onSubmit);
+  </script>
+</body>
+</html>
