@@ -14,12 +14,12 @@ body, html {
   padding: 40px;
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  width: 600px; /* увеличена ширина формы */
+  width: 600px;
   max-width: 95%;
 }
 
 button#yesBtn, button#noBtn {
-  font-size: 72px; /* в 3 раза больше, если базовый 24px */
+  font-size: 72px;
   padding: 20px 40px;
   margin: 20px 10px;
   border-radius: 10px;
@@ -113,6 +113,7 @@ button#submitBtn:hover {
   user-select: text;
   white-space: nowrap;
   overflow-x: auto;
+  text-align: center;
 }
 
 .code, .error, .timer {
@@ -120,6 +121,7 @@ button#submitBtn:hover {
   font-weight: bold;
   font-size: 20px;
   margin: 15px 0;
+  text-align: center;
 }
 
 .code {
@@ -132,4 +134,178 @@ button#submitBtn:hover {
 
 .timer {
   color: #333;
+  font-size: 22px;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto 20px;
+}
+
+.button-grid button {
+  font-size: 24px;
+  padding: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background-color: #fff;
+  user-select: none;
+  transition: background-color 0.3s;
+  height: 60px;
+}
+
+.button-grid button.correct {
+  background-color: #90ee90 !important;
+  cursor: default;
+}
+
+.button-grid button.wrong {
+  background-color: #ff6b6b !important;
+  cursor: default;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: default;
+}
+
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0f0f0;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  width: 600px;
+  max-width: 95%;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 12px;
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+
+.button-grid button {
+  font-size: 24px;
+  padding: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background-color: #fff;
+  user-select: none;
+  transition: background-color 0.3s;
+  height: 60px;
+}
+
+.button-grid button.correct {
+  background-color: #90ee90 !important;
+  cursor: default;
+}
+
+.button-grid button.wrong {
+  background-color: #ff6b6b !important;
+  cursor: default;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: default;
+}
+
+input#inputField {
+  font-size: 24px;
+  padding: 10px;
+  width: 220px;
+  border-radius: 8px;
+  border: 2px solid #555;
+  margin: 20px auto;
+  display: block;
+  text-align: center;
+}
+
+button#submitBtn {
+  font-size: 24px;
+  padding: 12px 30px;
+  margin: 10px auto 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background-color: #fff;
+  transition: 0.3s;
+  display: block;
+  width: 220px;
+}
+
+button#submitBtn:hover:not(.disabled) {
+  background-color: #e0e0e0;
+}
+
+.equation {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 30px 0 30px 0;
+  letter-spacing: 3px;
+  color: #333;
+  user-select: text;
+  white-space: nowrap;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.captcha-text {
+  font-weight: 700;
+  font-size: 28px;
+  margin: 15px 0;
+  user-select: none;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  letter-spacing: 1.5px;
+}
+
+.code, .error, .timer {
+  display: block;
+  font-weight: bold;
+  font-size: 20px;
+  margin: 15px 0;
+  text-align: center;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, auto);
+  gap: 12px;
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+
+.code {
+  color: green;
+}
+
+.error {
+  color: red;
+}
+
+.timer {
+  color: #333;
+  font-size: 22px;
 }
