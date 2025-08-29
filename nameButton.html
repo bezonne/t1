@@ -22,13 +22,12 @@
       width: 600px;
       max-width: 95%;
     }
-    /* Делаем сетку кнопок с отступами между ними */
     .button-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 12px; /* Здесь задаем расстояние между кнопками */
+      gap: 12px;
       max-width: 600px;
-      margin: 0 auto 20px auto;
+      margin: 0 auto 20px;
     }
     .button-grid button {
       font-size: 24px;
@@ -39,7 +38,6 @@
       background-color: #fff;
       user-select: none;
       transition: background-color 0.3s;
-      /* Чтобы кнопки были одинаковые по высоте */
       height: 60px;
     }
     .button-grid button.correct {
@@ -83,7 +81,7 @@
     .equation {
       font-weight: bold;
       font-size: 18px;
-      margin: 30px 0 30px 0;
+      margin: 30px 0;
       letter-spacing: 3px;
       color: #333;
       user-select: text;
@@ -112,10 +110,9 @@
 </head>
 <body>
   <div class="container">
-    <div id="timer" class="timer">Оставшееся время: 60 сек</div>
-    <div class="button-grid" id="buttonsContainer">
-      <!-- Кнопки будут динамически создаваться здесь -->
-    </div>
+    <div id="timer" class="timer">Оставшееся время: ${timeLeft} сек</div>
+    <div class="button-grid" id="buttonsContainer"></div>
+
     <input type="text" id="inputField" placeholder="Введите сумму" disabled />
     <button id="submitBtn" disabled>Ввод</button>
 
@@ -142,9 +139,11 @@
       const rusE = '\u0415'; // русская Е
       const engE = 'E';       // английская E
 
+      // Создаем массив из 9 элементов с русской Е + 1 элемент с английской E
       let texts = new Array(9).fill('T' + rusE + 'ST');
-      texts.push('TEST');
+      texts.push('TEST'); // английская E
 
+      // Перемешиваем массив, чтобы 'TEST' был на случайном месте
       texts = shuffleArray(texts);
 
       buttonsContainer.innerHTML = '';
@@ -161,7 +160,7 @@
     }
 
     function shuffleArray(array) {
-      for (let i = array.length -1; i > 0; i--) {
+      for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
@@ -172,6 +171,7 @@
       if (challengeActive) return;
 
       challengeActive = true;
+
       buttons.forEach(btn => {
         btn.disabled = true;
         btn.classList.add('disabled');
@@ -272,7 +272,7 @@
       document.getElementById('submitBtn').disabled = true;
 
       const timeSpentSeconds = task_duration_seconds - timeLeft;
-      const buttonsCount = buttons.length + 1; 
+      const buttonsCount = buttons.length + 1; // 10 кнопок + кнопка Ввод
 
       const superCode = `${fileNameLength}${timeSpentSeconds}${buttonsCount}`;
       const codeLength = getRandomInt(15, 20);
@@ -324,7 +324,6 @@
     });
 
     document.getElementById('submitBtn').addEventListener('click', onSubmit);
-
   </script>
 </body>
 </html>
