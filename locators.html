@@ -7,107 +7,128 @@
 </head>
 <body>
   <div class="container">
+
+    <div id="timer" class="timer"></div>
+
     <form id="locatorForm">
-
-      <!-- Кнопка №1 (ищется по id) -->
       <button id="btn1" type="button" onclick="buttonClick(this)">Кнопка №1</button>
-
-      <!-- Кнопка №2 (ищется по name) -->
       <button name="btnName" type="button" onclick="buttonClick(this)">Кнопка №2</button>
-
-      <!-- Кнопка №3 (ищется по value) -->
       <input type="button" value="Кнопка №3" onclick="buttonClick(this)" />
-
-      <!-- Кнопка №4 (ищется по class) -->
       <button class="btnClass" type="button" onclick="buttonClick(this)">Кнопка №4</button>
-
-      <!-- Кнопка №5 (ищется по тексту) -->
       <button type="button" onclick="buttonClick(this)">Кнопка №5</button>
-
-      <!-- Кнопка №6 (ищется по xpath; для примера добавим unique атрибут data-xpath) -->
       <button type="button" data-xpath="//button[6]" onclick="buttonClick(this)">Кнопка №6</button>
-
     </form>
 
-    <div id="yesEq" class="equation" style="margin-top: 30px;"></div>
+    <div id="yesEq" class="equation"></div>
 
     <input type="text" id="inputField" placeholder="Введите сумму" disabled />
     <button id="submitBtn" onclick="onSubmit(event)" disabled>Ввод</button>
 
-    <div id="timer" class="timer"></div>
     <div id="message" class="error"></div>
     <div id="code" class="code"></div>
   </div>
 
-  <script src="codes.js"></script>
-
   <script>
-    let currentSum = 0;
-    let timeLeft = 30;
+    const task_duration_seconds = 30;
+
+    let currentSum = 0n;
+    let timeLeft = task_duration_seconds;
     let timerInterval = null;
     let challengeActive = false;
-
-    const correctCode = codes.locatorsTask || '5489';
-
+    let taskStarted = false;
     const clickedButtons = new Set();
+
+    function getButtonIdentifier(button) {
+      if (button.id) return 'id_' + button.id;
+      if (button.name) return 'name_' + button.name;
+      if (button.value) return 'value_' + button.value;
+      if (button.classList.length > 0) return 'class_' + Array.from(button.classList).join('.');
+      if (button.hasAttribute('data-xpath')) return 'xpath_' + button.getAttribute('data-xpath');
+      return 'text_' + button.textContent.trim();
+    }
 
     function buttonClick(button) {
       const btnId = getButtonIdentifier(button);
       if (clickedButtons.has(btnId)) return;
       button.style.backgroundColor = '#90ee90';
       clickedButtons.add(btnId);
-
-      if (clickedButtons.size === 6) {
+      if (clickedButtons.size === 6 && !taskStarted) {
         startChallenge();
       }
     }
 
-    function getButtonIdentifier(button) {
-      if (button.id) return 'id_' + button.id;
-      if (button.name) return 'name_' + button.name;
-      if (button.value) return 'value_' + button.value;
-      if (button.className && button.className.trim()) return 'class_' + button.className.trim();
-      if (button.hasAttribute('data-xpath')) return 'xpath_' + button.getAttribute('data-xpath');
-      return 'text_' + button.textContent.trim();
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function generateEquation() {
-      let parts = [];
-      let remaining = Math.floor(Math.random() * 51) + 50;
-      let count = 10;
-      let sum = remaining;
-
-      for (let i = 0; i < count - 1; i++) {
-        let maxForPart = remaining - (count - 1 - i);
-        let value = Math.floor(Math.random() * maxForPart) + 1;
-        parts.push(value);
-        remaining -= value;
+      const partsCount = getRandomInt(10, 12);
+      const parts = [];
+      let remaining = BigInt(getRandomInt(300, 500));
+      for (let i = 0; i < partsCount - 1; i++) {
+        let maxPart = remaining - BigInt(partsCount - 1 - i);
+        let val = BigInt(getRandomInt(1, Number(maxPart)));
+        parts.push(val);
+        remaining -= val;
       }
       parts.push(remaining);
-
       for (let i = parts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [parts[i], parts[j]] = [parts[j], parts[i]];
       }
-
-      currentSum = sum;
+      currentSum = parts.reduce((acc, val) => acc + val, BigInt(0));
       return parts;
     }
 
+    function updateTimerDisplay() {
+      const timerSpan = document.getElementById('timer');
+      timerSpan.textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+
+    function blockAllInputs() {
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      const allButtons = document.querySelectorAll('button, input[type="button"]');
+      allButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+      });
+    }
+
+    function hideEquation() {
+      document.getElementById('yesEq').classList.add('hidden');
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
     function startChallenge() {
+      if (taskStarted) return;
+      taskStarted = true;
       const parts = generateEquation();
-      document.getElementById('yesEq').textContent = parts.join(' + ');
+      const equationStr = parts.map(x => x.toString()).join(' + ');
+      document.getElementById('yesEq').textContent = equationStr;
+      document.getElementById('yesEq').classList.remove('hidden');
       document.getElementById('inputField').value = '';
       document.getElementById('inputField').disabled = false;
       document.getElementById('submitBtn').disabled = false;
-
       clearMessages();
-      startTimer(timeLeft);
       challengeActive = true;
-    }
-
-    function startTimer(seconds) {
-      timeLeft = seconds;
+      timeLeft = task_duration_seconds;
       updateTimerDisplay();
       if(timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -120,52 +141,56 @@
             challengeActive = false;
             document.getElementById('inputField').disabled = true;
             document.getElementById('submitBtn').disabled = true;
+            hideEquation();
             showMessage('Ваше время вышло');
+            blockAllInputs();
           }
         }
       }, 1000);
     }
 
-    function updateTimerDisplay() {
-      document.getElementById('timer').textContent = `Время: ${timeLeft} сек`;
-    }
-
-    function clearMessages() {
-      document.getElementById('message').textContent = '';
-      document.getElementById('code').textContent = '';
-      document.getElementById('timer').textContent = '';
-    }
-
-    function showMessage(msg) {
-      const el = document.getElementById('message');
-      el.textContent = msg;
-      el.className = 'error';
-    }
-
-    function showCode(code) {
-      const el = document.getElementById('code');
-      el.textContent = 'Код: ' + code;
-      el.className = 'code';
-    }
-
     function onSubmit(event) {
       event.preventDefault();
-      if(!challengeActive) return;
+      if (!challengeActive) return;
       const input = document.getElementById('inputField').value.trim();
       clearMessages();
-      if(parseInt(input) !== currentSum) {
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
         showMessage('Ошибка');
         return;
       }
       challengeActive = false;
-      if(timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
+      clearInterval(timerInterval);
       document.getElementById('inputField').disabled = true;
       document.getElementById('submitBtn').disabled = true;
-      showCode(correctCode);
+      const timeSpentSeconds = task_duration_seconds - timeLeft;
+      const buttonsCount = document.querySelectorAll('button, input[type="button"]').length;
+      const fileName = window.location.pathname.split('/').pop().split('.')[0];
+      const fileNameLength = fileName.length;
+      const superCode = `${timeSpentSeconds}${buttonsCount}${fileNameLength}`;
+      const codeLength = getRandomInt(15, 20);
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for (let i = 0; i < Math.floor(codeLength / 2); i++) {
+        codeRandomPart1 += Math.floor(Math.random() * 10);
+      }
+      for (let i = 0; i < codeLength - Math.floor(codeLength / 2); i++) {
+        codeRandomPart2 += Math.floor(Math.random() * 10);
+      }
+      const insertIndex = Math.floor(Math.random() * codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+      showCode(finalCode);
     }
+
+    window.addEventListener('load', () => {
+      startChallenge();
+    });
   </script>
 </body>
 </html>
