@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Задание с животными в выпадающем списке</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div id="timer" class="timer">Оставшееся время: 60 сек</div>
+    <select id="animalSelect">
+      <option value="" disabled selected>Выберите животное</option>
+    </select>
+    <div class="captcha-text" id="captcha"></div>
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" disabled>Ввод</button>
+    <div id="yesEq" class="equation"></div>
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+  <script>
+    const task_duration_seconds = 60;
+    let timeLeft = task_duration_seconds;
+    let timerInterval = null;
+    const animalList = [
+      "Лев", "Тигр", "Медведь", "Волк", "Слон",
+      "Жираф", "Обезьяна", "Заяц", "Олень", "Крокодил"
+    ];
+    let challengeActive = false;
+    let currentSum = 0n;
+    let captchaAnimal = "";
+    const totalOptionsCount = animalList.length + 1;
+    const fileName = window.location.pathname.split('/').pop().split('.')[0];
+    const fileNameLength = fileName.length;
+    const animalSelect = document.getElementById('animalSelect');
+    const captchaDiv = document.getElementById('captcha');
+    const inputField = document.getElementById('inputField');
+    const submitBtn = document.getElementById('submitBtn');
+    function shuffleArray(array) {
+      for(let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+    function populateDropdown() {
+      const shuffledAnimals = shuffleArray([...animalList]);
+      animalSelect.innerHTML = '<option value="" disabled selected>Выберите животное</option>';
+      shuffledAnimals.forEach(animal => {
+        const opt = document.createElement('option');
+        opt.value = animal;
+        opt.textContent = animal;
+        animalSelect.appendChild(opt);
+      });
+      captchaAnimal = shuffledAnimals[Math.floor(Math.random() * shuffledAnimals.length)];
+      let captchaText = '';
+      for (let c of captchaAnimal) {
+        captchaText += Math.random() > 0.5 ? c.toUpperCase() : c.toLowerCase();
+      }
+      captchaDiv.textContent = captchaText;
+      challengeActive = false;
+      inputField.disabled = true;
+      inputField.value = '';
+      submitBtn.disabled = true;
+      clearMessages();
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('code').textContent = '';
+      document.getElementById('message').textContent = '';
+      animalSelect.disabled = false;
+      animalSelect.selectedIndex = 0;
+    }
+    animalSelect.addEventListener('change', () => {
+      if (challengeActive) return;
+      const selectedValue = animalSelect.value;
+      challengeActive = true;
+      if (selectedValue.toLowerCase() === captchaAnimal.toLowerCase()) {
+        animalSelect.style.backgroundColor = '#90ee90';
+        inputField.disabled = false;
+        submitBtn.disabled = false;
+        startEquationChallenge();
+      } else {
+        animalSelect.style.backgroundColor = '#ff6b6b';
+        showMessage("Неверная опция");
+      }
+      animalSelect.disabled = true;
+    });
+    function startEquationChallenge() {
+      const parts = generateEquation();
+      const equationStr = parts.map(x => x.toString()).join(' + ');
+      currentSum = parts.reduce((acc, val) => acc + val, 0n);
+      const eqDiv = document.getElementById('yesEq');
+      eqDiv.textContent = equationStr;
+      eqDiv.style.display = 'block';
+      clearMessages();
+    }
+    function generateEquation() {
+      const partsCount = getRandomInt(10, 12);
+      const parts = [];
+      let remaining = BigInt(getRandomInt(300, 500));
+      for (let i = 0; i < partsCount - 1; i++) {
+        let maxPart = remaining - BigInt(partsCount - 1 - i);
+        let val = BigInt(getRandomInt(1, Number(maxPart)));
+        parts.push(val);
+        remaining -= val;
+      }
+      parts.push(remaining);
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+      return parts;
+    }
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+    submitBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (inputField.disabled) return;
+      const input = inputField.value.trim();
+      clearMessages();
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+      clearInterval(timerInterval);
+      inputField.disabled = true;
+      submitBtn.disabled = true;
+      const timeSpentSeconds = task_duration_seconds - timeLeft;
+      const superCode = `${fileNameLength}${timeSpentSeconds}${totalOptionsCount}`;
+      const codeLength = getRandomInt(15, 20);
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for (let i = 0; i < Math.floor(codeLength / 2); i++) {
+        codeRandomPart1 += Math.floor(Math.random() * 10);
+      }
+      for (let i = 0; i < codeLength - Math.floor(codeLength / 2); i++) {
+        codeRandomPart2 += Math.floor(Math.random() * 10);
+      }
+      const insertIndex = Math.floor(Math.random() * codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+      showCode(finalCode);
+    });
+    function startTimer() {
+      timeLeft = task_duration_seconds;
+      updateTimerDisplay();
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          blockAllControls();
+        }
+      }, 1000);
+    }
+    function blockAllControls() {
+      animalSelect.disabled = true;
+      submitBtn.disabled = true;
+      inputField.disabled = true;
+      showMessage('Время вышло');
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('yesEq').style.display = 'none';
+    }
+    window.addEventListener('load', () => {
+      populateDropdown();
+      startTimer();
+    });
+  </script>
+</body>
+</html>
