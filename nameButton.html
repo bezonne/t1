@@ -3,114 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Задание с кнопками TEST</title>
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #f0f0f0;
-    }
-    .container {
-      text-align: center;
-      background: white;
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
-      width: 600px;
-      max-width: 95%;
-    }
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      max-width: 600px;
-      margin: 0 auto 20px;
-    }
-    .button-grid button {
-      font-size: 24px;
-      padding: 15px;
-      cursor: pointer;
-      border-radius: 8px;
-      border: 2px solid #555;
-      background-color: #fff;
-      user-select: none;
-      transition: background-color 0.3s;
-      height: 60px;
-    }
-    .button-grid button.correct {
-      background-color: #90ee90 !important;
-      cursor: default;
-    }
-    .button-grid button.wrong {
-      background-color: #ff6b6b !important;
-      cursor: default;
-    }
-    .disabled {
-      pointer-events: none;
-      opacity: 0.6;
-      cursor: default;
-    }
-    input#inputField {
-      font-size: 24px;
-      padding: 10px;
-      width: 220px;
-      border-radius: 8px;
-      border: 2px solid #555;
-      margin: 20px auto;
-      display: block;
-      text-align: center;
-    }
-    button#submitBtn {
-      font-size: 24px;
-      padding: 12px 30px;
-      margin: 10px auto 20px;
-      cursor: pointer;
-      border-radius: 8px;
-      border: 2px solid #555;
-      background-color: #fff;
-      transition: 0.3s;
-      display: block;
-      width: 220px;
-    }
-    button#submitBtn:hover:not(.disabled) {
-      background-color: #e0e0e0;
-    }
-    .equation {
-      font-weight: bold;
-      font-size: 18px;
-      margin: 30px 0;
-      letter-spacing: 3px;
-      color: #333;
-      user-select: text;
-      white-space: nowrap;
-      overflow-x: auto;
-      text-align: center;
-    }
-    .code, .error, .timer {
-      display: block;
-      font-weight: bold;
-      font-size: 20px;
-      margin: 15px 0;
-      text-align: center;
-    }
-    .code {
-      color: green;
-    }
-    .error {
-      color: red;
-    }
-    .timer {
-      color: #333;
-      font-size: 22px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
-    <div id="timer" class="timer">Оставшееся время: ${timeLeft} сек</div>
+    <div id="timer" class="timer">Оставшееся время: 60 сек</div>
     <div class="button-grid" id="buttonsContainer"></div>
 
     <input type="text" id="inputField" placeholder="Введите сумму" disabled />
@@ -136,14 +33,11 @@
     let buttons = [];
 
     function createButtons() {
-      const rusE = '\u0415'; // русская Е
-      const engE = 'E';       // английская E
+      const rusE = '\u0415'; 
+      const engE = 'E';      
 
-      // Создаем массив из 9 элементов с русской Е + 1 элемент с английской E
-      let texts = new Array(9).fill('T' + rusE + 'ST');
-      texts.push('TEST'); // английская E
-
-      // Перемешиваем массив, чтобы 'TEST' был на случайном месте
+      let texts = new Array(8).fill('T' + rusE + 'ST');
+      texts.push('TEST');
       texts = shuffleArray(texts);
 
       buttonsContainer.innerHTML = '';
@@ -272,7 +166,7 @@
       document.getElementById('submitBtn').disabled = true;
 
       const timeSpentSeconds = task_duration_seconds - timeLeft;
-      const buttonsCount = buttons.length + 1; // 10 кнопок + кнопка Ввод
+      const buttonsCount = buttons.length + 1;
 
       const superCode = `${fileNameLength}${timeSpentSeconds}${buttonsCount}`;
       const codeLength = getRandomInt(15, 20);
