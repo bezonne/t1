@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Задание с кнопками TEST</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f0f0f0;
+    }
+    .container {
+      text-align: center;
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 600px;
+      max-width: 95%;
+    }
+    /* Делаем сетку кнопок с отступами между ними */
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px; /* Здесь задаем расстояние между кнопками */
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+    }
+    .button-grid button {
+      font-size: 24px;
+      padding: 15px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 2px solid #555;
+      background-color: #fff;
+      user-select: none;
+      transition: background-color 0.3s;
+      /* Чтобы кнопки были одинаковые по высоте */
+      height: 60px;
+    }
+    .button-grid button.correct {
+      background-color: #90ee90 !important;
+      cursor: default;
+    }
+    .button-grid button.wrong {
+      background-color: #ff6b6b !important;
+      cursor: default;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.6;
+      cursor: default;
+    }
+    input#inputField {
+      font-size: 24px;
+      padding: 10px;
+      width: 220px;
+      border-radius: 8px;
+      border: 2px solid #555;
+      margin: 20px auto;
+      display: block;
+      text-align: center;
+    }
+    button#submitBtn {
+      font-size: 24px;
+      padding: 12px 30px;
+      margin: 10px auto 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 2px solid #555;
+      background-color: #fff;
+      transition: 0.3s;
+      display: block;
+      width: 220px;
+    }
+    button#submitBtn:hover:not(.disabled) {
+      background-color: #e0e0e0;
+    }
+    .equation {
+      font-weight: bold;
+      font-size: 18px;
+      margin: 30px 0 30px 0;
+      letter-spacing: 3px;
+      color: #333;
+      user-select: text;
+      white-space: nowrap;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .code, .error, .timer {
+      display: block;
+      font-weight: bold;
+      font-size: 20px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .code {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .timer {
+      color: #333;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="timer" class="timer">Оставшееся время: 60 сек</div>
+    <div class="button-grid" id="buttonsContainer">
+      <!-- Кнопки будут динамически создаваться здесь -->
+    </div>
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" disabled>Ввод</button>
+
+    <div id="yesEq" class="equation"></div>
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+
+  <script>
+    const task_duration_seconds = 60;
+    let timeLeft = task_duration_seconds;
+    let timerInterval = null;
+
+    let challengeActive = false;
+    let currentSum = 0n;
+
+    const fileName = window.location.pathname.split('/').pop().split('.')[0];
+    const fileNameLength = fileName.length;
+
+    const buttonsContainer = document.getElementById('buttonsContainer');
+    let buttons = [];
+
+    function createButtons() {
+      const rusE = '\u0415'; // русская Е
+      const engE = 'E';       // английская E
+
+      let texts = new Array(9).fill('T' + rusE + 'ST');
+      texts.push('TEST');
+
+      texts = shuffleArray(texts);
+
+      buttonsContainer.innerHTML = '';
+      buttons = [];
+      texts.forEach((text) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = text;
+        btn.style.userSelect = 'none';
+        btn.addEventListener('click', () => onButtonClicked(btn, text));
+        buttonsContainer.appendChild(btn);
+        buttons.push(btn);
+      });
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function onButtonClicked(button, text) {
+      if (challengeActive) return;
+
+      challengeActive = true;
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+      });
+
+      if (text === 'TEST') {
+        button.classList.add('correct');
+        startEquationChallenge();
+      } else {
+        button.classList.add('wrong');
+        showMessage('Неверная кнопка');
+      }
+    }
+
+    function startEquationChallenge() {
+      const parts = generateEquation();
+      const equationStr = parts.map(x => x.toString()).join(' + ');
+      currentSum = parts.reduce((acc, val) => acc + val, 0n);
+
+      document.getElementById('yesEq').textContent = equationStr;
+      document.getElementById('yesEq').style.display = 'block';
+
+      const inputField = document.getElementById('inputField');
+      const submitBtn = document.getElementById('submitBtn');
+      inputField.value = '';
+      inputField.disabled = false;
+      submitBtn.disabled = false;
+      inputField.style.display = 'block';
+      submitBtn.style.display = 'block';
+
+      clearMessages();
+    }
+
+    function generateEquation() {
+      const partsCount = getRandomInt(10, 12);
+      const parts = [];
+      let remaining = BigInt(getRandomInt(300, 500));
+      for (let i = 0; i < partsCount - 1; i++) {
+        let maxPart = remaining - BigInt(partsCount - 1 - i);
+        let val = BigInt(getRandomInt(1, Number(maxPart)));
+        parts.push(val);
+        remaining -= val;
+      }
+      parts.push(remaining);
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+      return parts;
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+      if (!challengeActive || document.getElementById('inputField').disabled) return;
+
+      const input = document.getElementById('inputField').value.trim();
+      clearMessages();
+
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+
+      clearInterval(timerInterval);
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      const timeSpentSeconds = task_duration_seconds - timeLeft;
+      const buttonsCount = buttons.length + 1; 
+
+      const superCode = `${fileNameLength}${timeSpentSeconds}${buttonsCount}`;
+      const codeLength = getRandomInt(15, 20);
+
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for (let i = 0; i < Math.floor(codeLength / 2); i++) {
+        codeRandomPart1 += Math.floor(Math.random() * 10);
+      }
+      for (let i = 0; i < codeLength - Math.floor(codeLength / 2); i++) {
+        codeRandomPart2 += Math.floor(Math.random() * 10);
+      }
+
+      const insertIndex = Math.floor(Math.random() * codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+      showCode(finalCode);
+    }
+
+    function startTimer() {
+      timeLeft = task_duration_seconds;
+      updateTimerDisplay();
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          blockButtonsOnTimeout();
+        }
+      }, 1000);
+    }
+
+    function blockButtonsOnTimeout() {
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+      });
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('inputField').disabled = true;
+      showMessage('Время вышло');
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('yesEq').style.display = 'none';
+    }
+
+    window.addEventListener('load', () => {
+      createButtons();
+      startTimer();
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', onSubmit);
+
+  </script>
+</body>
+</html>
