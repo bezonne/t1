@@ -23,7 +23,7 @@
   </div>
 
   <script>
-    const task_duration_seconds = 60;
+    const task_duration_seconds = 30;
     let currentSum = 0n;
     let currentEquation = '';
     let timeLeft = task_duration_seconds;
@@ -140,11 +140,19 @@
 
       const parts = generateEquation();
       currentEquation = parts.map(x => x.toString()).join(' + ');
-      document.getElementById('yesEq').textContent = currentEquation;
-      document.getElementById('inputField').value = '';
-      document.getElementById('inputField').disabled = false;
-      document.getElementById('submitBtn').disabled = false;
+      const eqDiv = document.getElementById('yesEq');
+      eqDiv.textContent = currentEquation;
+      eqDiv.classList.remove('hidden');
+
+      const inputField = document.getElementById('inputField');
+      const submitBtn = document.getElementById('submitBtn');
+      inputField.value = '';
+      inputField.disabled = false;
+      submitBtn.disabled = false;
+      inputField.classList.remove('disabled');
+      submitBtn.classList.remove('disabled');
       clearMessages();
+
       challengeStartTime = Date.now();
     }
 
@@ -170,8 +178,7 @@
     }
 
     window.addEventListener('load', () => {
-      startTimer(TASK_TIMER_SECONDS);
-      startChallenge();
+      startTimer(task_duration_seconds);
     });
 
     function clearAll() {
@@ -188,6 +195,7 @@
       document.getElementById('inputField').disabled = true;
       document.getElementById('submitBtn').disabled = true;
       document.getElementById('yesEq').textContent = '';
+      document.getElementById('yesEq').classList.add('hidden');
       document.getElementById('timer').textContent = '';
       document.getElementById('yesBtn').disabled = false;
       document.getElementById('noBtn').disabled = false;
