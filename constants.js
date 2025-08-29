@@ -1,1 +1,0 @@
-const TASK_TIMER_SECONDS = 10;
