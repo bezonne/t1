@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Задание с уравнением и таймером</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div id="timer" class="timer"></div>
+
+    <button id="yesBtn" onclick="startChallenge()">Да</button>
+    <button id="noBtn" onclick="clearAll()">Нет</button>
+
+    <div id="yesEq" class="equation"></div>
+
+    <input type="text" id="inputField" placeholder="Введите сумму" disabled />
+    <button id="submitBtn" onclick="onSubmit(event)" disabled>Ввод</button>
+
+    <div id="message" class="error"></div>
+    <div id="code" class="code"></div>
+  </div>
+
+  <script>
+    const TASK_TIMER_SECONDS = 60;
+    let currentSum = 0n;
+    let currentEquation = '';
+    let timeLeft = TASK_TIMER_SECONDS;
+    let timerInterval = null;
+    let challengeActive = false;
+    let taskStarted = false;
+    let challengeStartTime = 0;
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateEquation() {
+      const partsCount = getRandomInt(10, 12);
+      const parts = [];
+      let remaining = BigInt(getRandomInt(300, 500));
+      for (let i = 0; i < partsCount - 1; i++) {
+        let maxPart = remaining - BigInt(partsCount - 1 - i);
+        let val = BigInt(getRandomInt(1, Number(maxPart)));
+        parts.push(val);
+        remaining -= val;
+      }
+      parts.push(remaining);
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+      currentSum = parts.reduce((acc, val) => acc + val, BigInt(0));
+      return parts;
+    }
+
+    function updateTimerDisplay() {
+      const timerSpan = document.getElementById('timer');
+      timerSpan.textContent = `Оставшееся время: ${timeLeft} сек`;
+    }
+
+    function blockAllInputs() {
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('yesBtn').disabled = true;
+      document.getElementById('noBtn').disabled = true;
+      document.getElementById('inputField').classList.add('disabled');
+      document.getElementById('submitBtn').classList.add('disabled');
+      document.getElementById('yesBtn').classList.add('disabled');
+      document.getElementById('noBtn').classList.add('disabled');
+    }
+
+    function hideEquation() {
+      document.getElementById('yesEq').classList.add('hidden');
+    }
+
+    function showMessage(msg) {
+      const messageSpan = document.getElementById('message');
+      messageSpan.textContent = msg;
+      messageSpan.className = 'error';
+    }
+
+    function clearMessages() {
+      document.getElementById('message').textContent = '';
+      document.getElementById('code').textContent = '';
+    }
+
+    function showCode(code) {
+      const codeSpan = document.getElementById('code');
+      codeSpan.textContent = 'Код: ' + code;
+      codeSpan.className = 'code';
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+      if (!challengeActive) return;
+      const input = document.getElementById('inputField').value.trim();
+      clearMessages();
+      let inputNum;
+      try {
+        inputNum = BigInt(input);
+      } catch {
+        showMessage('Ошибка: введите корректное число.');
+        return;
+      }
+      if (inputNum !== currentSum) {
+        showMessage('Ошибка');
+        return;
+      }
+      challengeActive = false;
+      clearInterval(timerInterval);
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      const timeSpentSeconds = Math.floor((Date.now() - challengeStartTime) / 1000);
+      const buttonsCount = document.querySelectorAll('button').length;
+      const fileName = window.location.pathname.split('/').pop().split('.')[0];
+      const fileNameLength = fileName.length;
+
+      const superCode = `${timeSpentSeconds}${buttonsCount}${fileNameLength}`;
+      const codeLength = getRandomInt(15, 20);
+      let codeRandomPart1 = '';
+      let codeRandomPart2 = '';
+      for (let i = 0; i < Math.floor(codeLength / 2); i++) {
+        codeRandomPart1 += Math.floor(Math.random() * 10);
+      }
+      for (let i = 0; i < codeLength - Math.floor(codeLength / 2); i++) {
+        codeRandomPart2 += Math.floor(Math.random() * 10);
+      }
+      const insertIndex = Math.floor(Math.random() * codeRandomPart1.length);
+      const finalCode = codeRandomPart1.slice(0, insertIndex) + superCode + codeRandomPart1.slice(insertIndex) + codeRandomPart2;
+      showCode(finalCode);
+    }
+
+    function startChallenge() {
+      if (taskStarted) return;
+      taskStarted = true;
+      challengeActive = true;
+
+      const parts = generateEquation();
+      currentEquation = parts.map(x => x.toString()).join(' + ');
+      document.getElementById('yesEq').textContent = currentEquation;
+      document.getElementById('inputField').value = '';
+      document.getElementById('inputField').disabled = false;
+      document.getElementById('submitBtn').disabled = false;
+      clearMessages();
+      challengeStartTime = Date.now();
+    }
+
+    function startTimer(seconds) {
+      timeLeft = seconds;
+      updateTimerDisplay();
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          challengeActive = false;
+          taskStarted = false;
+          blockAllInputs();
+          hideEquation();
+          showMessage('Ваше время вышло');
+        }
+      }, 1000);
+    }
+
+    window.addEventListener('load', () => {
+      startTimer(TASK_TIMER_SECONDS);
+      startChallenge();
+    });
+
+    function clearAll() {
+      clearMessages();
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      currentEquation = '';
+      currentSum = 0n;
+      challengeActive = false;
+      taskStarted = false;
+      document.getElementById('inputField').value = '';
+      document.getElementById('inputField').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('yesEq').textContent = '';
+      document.getElementById('timer').textContent = '';
+      document.getElementById('yesBtn').disabled = false;
+      document.getElementById('noBtn').disabled = false;
+      document.getElementById('inputField').classList.remove('disabled');
+      document.getElementById('submitBtn').classList.remove('disabled');
+      document.getElementById('yesBtn').classList.remove('disabled');
+      document.getElementById('noBtn').classList.remove('disabled');
+    }
+  </script>
+</body>
+</html>
